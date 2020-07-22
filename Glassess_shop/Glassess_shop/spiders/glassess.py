@@ -27,3 +27,9 @@ class GlassessSpider(scrapy.Spider):
                 'product_url': glasses.xpath(".//div[@class='product-img-outer']/a/@href").get(),
                 'image_url': glasses.xpath(".//div[@class='product-img-outer']/a/img[1]/@src").get()
             }
+        next_page = response.xpath("//ul[@class='pagination']/li[6]/a/@href").get()
+        if next_page:
+            yield scrapy.Request(url=next_page, callback=self.parse, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36 Edg/84.0.522.40'
+
+            })
