@@ -27,5 +27,5 @@ class CoinsSpider(CrawlSpider):
             'name':response.xpath("//div[@class='cmc-details-panel-header sc-1extin6-0 gMbCkP']/h1/text()").get(),
             'price':response.xpath("//tbody[@class='cmc-details-panel-about__table']/tr[1]/td/text()").get(),
             'rank':response.xpath("//tbody[@class='cmc-details-panel-about__table']/tr[3]/td/text()").get(),
-            'market_cap':response.xpath("//tbody[@class='cmc-details-panel-about__table']/tr[4]/td/text()").get(),
+            'market_cap':response.xpath("//tbody[@class='cmc-details-panel-about__table']/tr[4]/td/text()").get()
         }
