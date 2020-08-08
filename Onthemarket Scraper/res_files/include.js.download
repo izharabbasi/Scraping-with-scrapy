@@ -1,0 +1,97 @@
+/**
+ * Charcol Widgets
+ *
+ * @filename include.js
+ * @author Mike Street
+ * @date 2020
+ * @copyright Liquid Light Ltd.
+ * @url http://www.liquidlight.co.uk
+ */
+var getCurrentScriptURL = (function() {
+	var scripts = document.getElementsByTagName('script'),
+		thisScript = scripts[scripts.length - 1],
+		defaultURL = 'https://www.charcol.co.uk',
+		url = defaultURL;
+
+	try{
+		url = new URL(thisScript.src);
+		url = url.origin;
+	} catch(err) {
+		url = defaultURL;
+	}
+
+	if(!url || (url.indexOf('charcol') == -1)) {
+		url = 'https://www.charcol.co.uk';
+	}
+
+	return function() {
+		return url;
+	};
+})();
+
+function init() {
+	var baseURL = getCurrentScriptURL();
+
+	// Inject the default CSS
+	var link = document.createElement('link');
+	link.rel = 'stylesheet';
+	link.href = baseURL + '/assets/widgets/css/screen.css';
+	link.type = 'text/css';
+	link.media = 'screen';
+	document.getElementsByTagName('head')[0].appendChild(link);
+
+	// Find the partner
+	var partner = 'none',
+		elements = document.getElementsByTagName('script');
+	for(var i = 0; i < elements.length; i++) {
+		if(elements[i].getAttribute('data-partner')) {
+			partner = elements[i].getAttribute('data-partner');
+			break;
+		}
+	}
+	if(partner !== 'none') {
+		link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = baseURL + '/assets/widgets/css/partner-' + partner + '.css';
+		link.type = 'text/css';
+		link.media = 'screen';
+		document.getElementsByTagName('head')[0].appendChild(link);
+	}
+
+	// Inject jQuery?
+	if('undefined' === typeof window.jQuery) {
+		var jquery = document.createElement('script');
+		jquery.src = baseURL + '/typo3/ext/ll_fe/Library/jQuery/latest/js/core.js';
+		document.getElementsByTagName('head')[0].appendChild(jquery);
+	}
+
+	// Inject the content into the page
+	var script = document.createElement('script');
+	script.src = baseURL + '/widgets/?partner=' + partner + '&host=' + window.location.hostname + '&referrer=' + encodeURI(window.origin);
+	script.setAttribute('defer', 'defer');
+
+	var widgets = [];
+	elements = document.getElementsByTagName('div');
+
+	for(var h = 0; h < elements.length; h++) {
+		if(elements[h].className == 'charcol') {
+			widgets.push(elements[h].id);
+		}
+	}
+	script.src += '&w=' + widgets.join('+');
+	document.getElementsByTagName('head')[0].appendChild(script);
+
+}
+
+// Inject the JavaScript
+function injectJS() {
+	var script = document.createElement('script');
+	script.src = getCurrentScriptURL() + '/assets/widgets/js/core.js';
+	script.type = 'text/javascript';
+	script.setAttribute('defer', 'defer');
+	document.getElementsByTagName('head')[0].appendChild(script);
+}
+
+(function() {
+	return init();
+})();

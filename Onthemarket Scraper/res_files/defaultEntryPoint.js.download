@@ -1,0 +1,1 @@
+var baseUrl=require.toUrl(""),baseUrlRelative=baseUrl.substring(0,baseUrl.length-3);require.config({baseUrl:baseUrlRelative}),define("seoRules",function(){return __seoRules}),require([baseUrlRelative+"js/default.js"]);
