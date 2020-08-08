@@ -84,9 +84,14 @@ class CommercialSpider(scrapy.Spider):
             'agent_address' : res.xpath("(//div[@class='panel-content'])[3]/a/div[2]/div/text()").get().strip(),
             'agent_phone' : res.xpath("(//div[@class='agent-phone-link'])[1]/text()").get(),
             'image_url' : res.xpath("//div[@class='image-wrapper main-image-wrapper']/picture/source/@srcset").getall(),
-            'full_description' : ''
-            
+            'full_description' : str(res.xpath("//div[@id='description-text']/text()").getall()).strip(),
+
         }
+
+        try:
+            features['key_features'] = res.xpath("//ul[@class='property-features']/li/text()").getall()
+        except:
+            features['key_features'] = ''
 
         print(json.dumps(features, indent=2))
 
