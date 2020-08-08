@@ -72,17 +72,18 @@ class CommercialSpider(scrapy.Spider):
 
         #extract features
         features = {
-            'id' : '',
-            'url' : '',
-            'postcode' :'',
-            'title' : '',
-            'address' : '',
-            'price' : '',
-            'agent_link' : '',
-            'agent_name' : '',
-            'agent_address' : '',
-            'agent_phone' : '',
-            'image_url' : '',
+            #'id' : res.url.split('/?channel=commercial')[0].split('/')[-1],
+            #'url' : res.url,
+            #'postcode' : '',
+
+            'title' : res.xpath("(//div[@class='details-heading'])[1]/h1/text()").get(),
+            'address' : res.xpath("(//div[@class='details-heading'])[1]/p[2]/text()").get(),
+            'price' : res.xpath("(//div[@class='details-heading'])[1]/p[1]/span[1]/text()").get(),
+            'agent_link' : res.xpath("(//div[@class='panel-content'])[3]/a/@href").get(),
+            'agent_name' : res.xpath("(//div[@class='panel-content'])[3]/a/div[2]/h2/text()").get(),
+            'agent_address' : res.xpath("(//div[@class='panel-content'])[3]/a/div[2]/div/text()").get().strip(),
+            'agent_phone' : res.xpath("(//div[@class='agent-phone-link'])[1]/text()").get(),
+            'image_url' : res.xpath("//div[@class='image-wrapper main-image-wrapper']/picture/source/@srcset").getall(),
             'full_description' : ''
             
         }
