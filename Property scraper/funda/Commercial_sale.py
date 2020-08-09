@@ -17,9 +17,9 @@ class CommercialSale(scrapy.Spider):
     }
 
     custom_settings = {
-        #'FEED_FORMAT': 'csv',
-        #'FEED_URI': 'Data.csv',
-        #'CONCURRENT_REQUESTS_PER_DOMAIN' : 1,
+        'FEED_FORMAT': 'csv',
+        'FEED_URI': 'Data.csv',
+        'CONCURRENT_REQUESTS_PER_DOMAIN' : 1,
         'DOWNLOAD_DELAY' : 0.5
     }
 
@@ -51,6 +51,8 @@ class CommercialSale(scrapy.Spider):
                 callback=self.parse_listings
             )
             
+            
+            
         # next_page = res.urljoin(res.xpath("//a[@rel='next']/@href").get())
         # if next_page:
         #     yield scrapy.Request(
@@ -61,6 +63,7 @@ class CommercialSale(scrapy.Spider):
 
     def parse_listings(self,res):
         postcode = res.meta.get('postcode')
+
         '''
         #debug purpose
         content = ''
@@ -72,29 +75,47 @@ class CommercialSale(scrapy.Spider):
         res = Selector(text=content)
         '''
         features = {
-            'id':res.url.split('-george-gershwinlaan-687/')[0].split('-')[-1],
+            'id':res.url.split('-')[1],
             'url':res.url,
             'postcode': postcode,
             'address': list(filter(None,[text.get().replace('\n','').strip()
                         for text in
                         res.css("h1[class='object-header__container'] *::text")])),
-            'price': str(res.xpath("//div[@class='object-header__pricing']/strong/text()").get()).replace('\u20ac','').replace('\u00c2\u00b2','').strip(),
+            'price': res.xpath("//div[@class='object-header__pricing']/strong/text()").get().strip(),
             'image_urls':res.xpath("//a[@data-media-viewer-overlay='foto-1']/img/@srcset").get(),
             'agent_name': res.xpath("//h3[@class='object-contact-aanbieder-name']/a/text()").get(),
             'agent_link': res.xpath("//h3[@class='object-contact-aanbieder-name']/a/@href").get(),
-            'full_description': res.xpath("//div[@class='object-description-body']/text()").get()
-    
-            
-        
+            'agent_contact': res.xpath("//span[@class='fd-completely-hidden fd-display-inline-block--bp-m']/text()").get().strip(),
+            'full_description': list(filter(None,[   text.strip()
+                                    for text in 
+                                    res.css("div[class='object-description-body'] *::text").getall()])),
+            'key_features': []
         }
-        yield features
-        print(json.dumps(features, indent=2))
+        #key features
+        key_features = {}
+        #extract features
+        features_selector = res.css("h3[class='object-kenmerken-list-header'] + dl[class='object-kenmerken-list']")
 
+        #features keys
+        features_key = features_selector.css("dt::text").getall()
         
+        #features values
+        features_vals = list(filter(None,[val.replace('\n','').strip()
+                        for val in 
+                        features_selector.css("dd::text").getall()
+        ]))
+
+        #combine key and values
+        for index in range(0,len(features_vals)):
+            key_features[features_key[index]] = features_vals[index]
+        #store key features
+        features['key_features'] = [key_features]
+
+        yield features
 
 
 
-#run scraper
+#run scraper`
 process = CrawlerProcess()
 process.crawl(CommercialSale)
 process.start()
