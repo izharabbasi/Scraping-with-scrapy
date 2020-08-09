@@ -3,6 +3,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.selector import Selector
 import urllib
 import json
+import csv
 
 class CommercialSale(scrapy.Spider):
     name = 'commercial_sale'
@@ -16,18 +17,15 @@ class CommercialSale(scrapy.Spider):
     }
 
     custom_settings = {
-        #'FEDD_FORMAT': 'csv',
+        #'FEED_FORMAT': 'csv',
         #'FEED_URI': 'Data.csv',
-        'CONCURRENT_REQUESTS_PER_DOMAIN' : 2,
-        'DOWNLOAD_DELAY' : 1
+        #'CONCURRENT_REQUESTS_PER_DOMAIN' : 1,
+        'DOWNLOAD_DELAY' : 0.5
     }
-    #current page
-    current_page = 0
 
     #Scraper entry point
     def start_requests(self):
         for postcode in range(1016,10000):
-            self.current_page = 0
             next_post = self.base_url + str(postcode) + '/huur/permaand/+5km/'
             yield scrapy.Request(
                 url=next_post,
@@ -52,15 +50,47 @@ class CommercialSale(scrapy.Spider):
                 },
                 callback=self.parse_listings
             )
-            break
+            
+        # next_page = res.urljoin(res.xpath("//a[@rel='next']/@href").get())
+        # if next_page:
+        #     yield scrapy.Request(
+        #         url= next_page,
+        #         headers=self.headers,
+        #         callback=self.parse_links
+        #     )
+
     def parse_listings(self,res):
         postcode = res.meta.get('postcode')
-
+        '''
         #debug purpose
         content = ''
 
-        with open('res.html', 'w') as f:
-            f.write(res.text)
+        with open('res.html' , 'r') as f:
+            for line in f.read():
+                content += line
+
+        res = Selector(text=content)
+        '''
+        features = {
+            'id':res.url.split('-george-gershwinlaan-687/')[0].split('-')[-1],
+            'url':res.url,
+            'postcode': postcode,
+            'address': list(filter(None,[text.get().replace('\n','').strip()
+                        for text in
+                        res.css("h1[class='object-header__container'] *::text")])),
+            'price': str(res.xpath("//div[@class='object-header__pricing']/strong/text()").get()).replace('\u20ac','').replace('\u00c2\u00b2','').strip(),
+            'image_urls':res.xpath("//a[@data-media-viewer-overlay='foto-1']/img/@srcset").get(),
+            'agent_name': res.xpath("//h3[@class='object-contact-aanbieder-name']/a/text()").get(),
+            'agent_link': res.xpath("//h3[@class='object-contact-aanbieder-name']/a/@href").get(),
+            'full_description': res.xpath("//div[@class='object-description-body']/text()").get()
+    
+            
+        
+        }
+        yield features
+        print(json.dumps(features, indent=2))
+
+        
 
 
 
@@ -69,5 +99,4 @@ process = CrawlerProcess()
 process.crawl(CommercialSale)
 process.start()
 
-
-
+#CommercialSale.parse_listings(CommercialSale, '')
