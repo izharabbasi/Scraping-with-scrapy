@@ -19,8 +19,8 @@ class CommercialSale(scrapy.Spider):
     custom_settings = {
         'FEED_FORMAT': 'csv',
         'FEED_URI': 'Data.csv',
-        'CONCURRENT_REQUESTS_PER_DOMAIN' : 1,
-        'DOWNLOAD_DELAY' : 0.5
+        #'CONCURRENT_REQUESTS_PER_DOMAIN' : 1,
+        #'DOWNLOAD_DELAY' : 0.5
     }
 
     #Scraper entry point
@@ -35,7 +35,7 @@ class CommercialSale(scrapy.Spider):
                 },
                 callback=self.parse_links
             )
-            break
+            
     def parse_links(self,res):
         postcode = res.meta.get('postcode')
         cards = res.xpath("//div[@class='search-result-content-inner']/div/div/a[1]")
@@ -53,27 +53,22 @@ class CommercialSale(scrapy.Spider):
             
             
             
-        # next_page = res.urljoin(res.xpath("//a[@rel='next']/@href").get())
-        # if next_page:
-        #     yield scrapy.Request(
-        #         url= next_page,
-        #         headers=self.headers,
-        #         callback=self.parse_links
-        #     )
+            
+        next_page = res.urljoin(res.xpath("//a[@rel='next']/@href").get())
+        if next_page:
+            yield scrapy.Request(
+                url= next_page,
+                headers=self.headers,
+                meta={
+                    'postcode':postcode
+                },
+                callback=self.parse_links
+            )
 
     def parse_listings(self,res):
         postcode = res.meta.get('postcode')
 
-        '''
-        #debug purpose
-        content = ''
-
-        with open('res.html' , 'r') as f:
-            for line in f.read():
-                content += line
-
-        res = Selector(text=content)
-        '''
+    
         features = {
             'id':res.url.split('-')[1],
             'url':res.url,
@@ -86,9 +81,11 @@ class CommercialSale(scrapy.Spider):
             'agent_name': res.xpath("//h3[@class='object-contact-aanbieder-name']/a/text()").get(),
             'agent_link': res.xpath("//h3[@class='object-contact-aanbieder-name']/a/@href").get(),
             'agent_contact': res.xpath("//span[@class='fd-completely-hidden fd-display-inline-block--bp-m']/text()").get().strip(),
-            'full_description': list(filter(None,[   text.strip()
-                                    for text in 
-                                    res.css("div[class='object-description-body'] *::text").getall()])),
+            'full_description': list(filter(None,[
+                text.strip()
+                for text in 
+                res.css("div[class='object-description-body'] *::text").getall()
+            ])),
             'key_features': []
         }
         #key features
