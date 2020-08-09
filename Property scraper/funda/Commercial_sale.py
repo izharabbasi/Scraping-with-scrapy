@@ -16,9 +16,8 @@ class CommercialSale(scrapy.Spider):
     }
 
     custom_settings = {
-        'FEDD_FORMAT': 'csv',
-        'FEED_URI': 'Data.csv'
-
+        #'FEDD_FORMAT': 'csv',
+        #'FEED_URI': 'Data.csv',
         'CONCURRENT_REQUESTS_PER_DOMAIN' : 2,
         'DOWNLOAD_DELAY' : 1
     }
@@ -27,15 +26,48 @@ class CommercialSale(scrapy.Spider):
 
     #Scraper entry point
     def start_requests(self):
-        for postcode in range(1000,10000):
-            print(postcode)
+        for postcode in range(1016,10000):
+            self.current_page = 0
+            next_post = self.base_url + str(postcode) + '/huur/permaand/+5km/'
+            yield scrapy.Request(
+                url=next_post,
+                headers=self.headers,
+                meta={
+                    'postcode':postcode
+                },
+                callback=self.parse_links
+            )
+            break
+    def parse_links(self,res):
+        postcode = res.meta.get('postcode')
+        cards = res.xpath("//div[@class='search-result-content-inner']/div/div/a[1]")
+        for card in cards:
+            link = res.urljoin(card.xpath(".//@href").get())
+
+            yield scrapy.Request(
+                url=link,
+                headers=self.headers,
+                meta={
+                    'postcode':postcode
+                },
+                callback=self.parse_listings
+            )
+            break
+    def parse_listings(self,res):
+        postcode = res.meta.get('postcode')
+
+        #debug purpose
+        content = ''
+
+        with open('res.html', 'w') as f:
+            f.write(res.text)
 
 
-    #run scraper
 
-    process = CrawlerProcess()
-    process.crawl(CommercialSale)
-    process.start()
+#run scraper
+process = CrawlerProcess()
+process.crawl(CommercialSale)
+process.start()
 
 
 
