@@ -1,37 +1,77 @@
 # -*- coding: utf-8 -*-
 import scrapy
+from scrapy_selenium import SeleniumRequest
+from scrapy.selector import Selector
 
 
 class PropertyScraperSpider(scrapy.Spider):
     name = 'property_scraper'
     allowed_domains = ['www.samtrygg.se']
-    start_urls = ['https://www.samtrygg.se/']
 
     base_url = 'https://www.samtrygg.se/RentalObject/NewSearch'
 
     headers = {
         'User-Agent' :'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.58',
-        'cookie': '.ASPXANONYMOUS=b_XM7x-n1gEkAAAAZTJjNTY0ZDQtMzVhNi00ODFmLTkzZDQtM2Y1MmRhZjE3YTI4LPix5tdrvKwwcnJwqEeXWc3RWAtgyd28urCjqHm4Reo1; _ga=GA1.2.477490575.1597225871; _gid=GA1.2.1381664640.1597225871; _vwo_uuid_v2=D1C81876362519D5FF49EFB7A628F972C|c392565894d10efecc264de768152182; _hjid=ad964e22-eb63-46d2-83c0-f73ea4a5c04a; _hjIncludedInPageviewSample=1; __ca__chat=sw9c7oGr8scT; cto_bundle=FO_dhV9vYlU4S2xVbHZic2llRmFpdkVYdmR5Q044MnBIdXp2ZTVIZzVPMmZaVE9mZHBTb05UcUxvU2V5TVVtT0Q0S3FwczNJaTBBUEpwdXhZanNrTXFZMVpwJTJCblIlMkJGQzNQSURGS3V1VFZuV0JERk5QN1FOM2RBb0ZvMzBnZ2lKbVhjS282dnIyUERGU0hNVXJOeUFIYU9DUThBJTNEJTNE; mp_2a6c1441f45b68d8dac010f9938a8688_mixpanel=%7B%22distinct_id%22%3A%20%22173e214abc72e6-0848696fb7df54-7e647c66-e1000-173e214abc8749%22%2C%22%24device_id%22%3A%20%22173e214abc72e6-0848696fb7df54-7e647c66-e1000-173e214abc8749%22%2C%22%24initial_referrer%22%3A%20%22%24direct%22%2C%22%24initial_referring_domain%22%3A%20%22%24direct%22%7D'
+        'content-type': 'text/html; charset=utf-8'
     }
 
     def start_requests(self):
-        yield scrapy.Request(
+        yield SeleniumRequest(
             url=self.base_url,
+            wait_time=3,
             headers=self.headers,
             callback=self.parse_links
         )
 
-    def parse_links(self, res):
-        cards = res.xpath("//div[@class='owl-carousel owl-theme show-nav-hover']/div/a")
+    def parse_links(self, response):
+        cards = response.xpath("//div[@class='owl-carousel owl-theme show-nav-hover']/div/a")
 
         for card in cards:
             link = card.xpath(".//@href").get()
-            
-            yield scrapy.Request(
-                url=link,
+
+            yield SeleniumRequest(
+                url= link,
+                wait_time=3,
                 headers=self.headers,
-                callback=self.parse_listings
+                callback=self.parse
+
             )
+        next_page = response.xpath('//*[@id="next"]/@href').get()
+        if next_page:
+            yield scrapy.Request(
+                url=next_page,
+                headers=self.headers,
+                callback=self.parse_links
+            )
+            
+            
+    def parse(self,response):
+        features = {
+            'title': response.xpath('//*[@id="property"]/div[1]/div[1]/div[2]/h1/text()').get(),
+            'image_url': response.xpath("//a[@itemprop='contentUrl']/@href").getall(),
+            'address' : response.xpath("//a[@id='js-scroll-to-map']/text()[2]").get().strip(),
+            'description': response.xpath("//p[@itemprop='description']/text()").get().strip(),
+            'Monthly_rent' : response.xpath('//*[@id="property"]/div[1]/div[2]/div[2]/div/div[1]/h5/span/text()').get().strip(),
+            'Accomodation': list(filter(None,[
+                text.replace('\n','').strip()
+                for text in 
+                response.css("div[class='boendet ammenities row'] *::text").getall()
+            ])),
+            'Amenities': list(filter(None,[
+                text.replace('\n','').strip()
+                for text in 
+                response.css("div[class='ammenities row'] *::text").getall()
+            ])),
+        }
+        yield features
+
+        print(features)
+
     
-    def parse_listings(self,res):
-        print('\n\n\nRESPONE' , res.text)
+        
+
+
+            
+            
+    
+    
