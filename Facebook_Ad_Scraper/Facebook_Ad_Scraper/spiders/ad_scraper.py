@@ -41,14 +41,6 @@ class AdScraperSpider(scrapy.Spider):
             yield SeleniumRequest(url=url, headers=self.headers, wait_time=3, screenshot=True, callback=self.parse)
             break
 
-    @property       
-    def getDays(self):
-
-        today = date.today()
-        ad_date = date(2020,8,9)
-        current_date = today - ad_date
-        return current_date
-
 
     def parse(self, response):
     
@@ -58,18 +50,21 @@ class AdScraperSpider(scrapy.Spider):
         res = Selector(text=html)
         ads = res.xpath("//div[@class='_99sa']/div/div/div[2]/div/div")
 
+        l_date = res.xpath("//div[@class='_7jwu']/span/text()").get()
+        print("\n\nTHIS IS DATE", l_date)
         
         for ad in ads:
+            l_date = res.xpath("//div[@class='_7jwu']/span/text()").get()
             try:
                 yield {
                     'FB_AD_link' : response.url,
                     'Fan_Page' : ad.xpath(".//div[@class='_8nqr _3qn7 _61-3 _2fyi _3qng']/span/a/text()").get(),
                     'Store_link' : ad.xpath(".//div[@style='line-height: 16px; max-height: 112px; -webkit-line-clamp: 7;']/div/a/text()").get(),
-                    'Number_of_Days_Launched': str(self.getDays.replace(', 0:00:00',''),
+                    'Product_Launch_Date': l_date,
                     'Heading' : ad.xpath(".//div[@class='_8jh2']/div/div/text()").get(),
                     'AD_copy': ad.xpath(".//div[@style='line-height: 16px; max-height: 112px; -webkit-line-clamp: 7;']/div/text()").get(),
-                    'Product_Launch_Date': ad.xpath(".//div[@class='_7jwu']/span[1]/text()").get(),
-                    'File_Generated_Date': date.today()
+                    'File_Generated_Date': date.today(),
+                    'video_Link': ad.xpath(".//div[@class='_8o0a _8o0b']/video/@src").get()
                 }
             except AttributeError:
                 pass
