@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy.crawler import CrawlerProcess
-from scrapy_selenium import SeleniumRequest
+from selenium import webdriver
 from scrapy.selector import Selector
-from shutil import which
 from datetime import date
-import urllib
-import json
 import re
 
 
 class AdScraperSpider(scrapy.Spider):
     name = 'ad_scraper'
     allowed_domains = ['www.facebook.com']
+
+    start_urls = [
+        'https://web.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&impression_search_field=has_impressions_lifetime&view_all_page_id=100113075122815'
+    ]
 
     Input_file = r'C:\Users\izhar\Projects\Facebook_Ad_Scraper\Facebook_Ad_Scraper\spiders\InputFile.csv'
 
@@ -27,8 +28,10 @@ class AdScraperSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
         'DOWNLOAD_DELAY': 1
     }
+
     
-    def start_requests(self):
+    def __init__(self):
+        self.driver = webdriver.Chrome()
         urls = ''
 
         with open(self.Input_file, 'r') as f:
@@ -36,36 +39,81 @@ class AdScraperSpider(scrapy.Spider):
                 urls += line
 
         urls = urls.split('\n')
-        for url in urls:
-            print(url)
-            yield SeleniumRequest(url=url, headers=self.headers, wait_time=3, screenshot=True, callback=self.parse)
+        for self.url in urls:
+            self.driver.get(self.url)
             break
-
+            
 
     def parse(self, response):
-    
-        driver = response.request.meta['driver']
+        resp = Selector(text=self.driver.page_source)
+        items = {
+            'Heading' : resp.xpath("//div[@class='_3qn7 _61-0 _2fyh _3qnf']/div/span/a/text()").get(),
+            'store_link' : resp.xpath("//a[@data-lynx-mode='asynclazy'][1]/text()").get()
+        }
+        yield items
 
-        html = driver.page_source
-        res = Selector(text=html)
-        ads = res.xpath("//div[@class='_99sa']/div/div/div[2]/div/div")
 
-        l_date = res.xpath("//div[@class='_7jwu']/span/text()").get()
-        print("\n\nTHIS IS DATE", l_date)
         
-        for ad in ads:
-            l_date = res.xpath("//div[@class='_7jwu']/span/text()").get()
-            try:
-                yield {
-                    'FB_AD_link' : response.url,
-                    'Fan_Page' : ad.xpath(".//div[@class='_8nqr _3qn7 _61-3 _2fyi _3qng']/span/a/text()").get(),
-                    'Store_link' : ad.xpath(".//div[@style='line-height: 16px; max-height: 112px; -webkit-line-clamp: 7;']/div/a/text()").get(),
-                    'Product_Launch_Date': l_date,
-                    'Heading' : ad.xpath(".//div[@class='_8jh2']/div/div/text()").get(),
-                    'AD_copy': ad.xpath(".//div[@style='line-height: 16px; max-height: 112px; -webkit-line-clamp: 7;']/div/text()").get(),
-                    'File_Generated_Date': date.today(),
-                    'video_Link': ad.xpath(".//div[@class='_8o0a _8o0b']/video/@src").get()
-                }
-            except AttributeError:
-                pass
-                
+        
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            # yield scrapy.Request(
+            #     url= store_link,
+            #     headers=self.headers,
+            #     meta={
+            #         'FB_AD_link': FB_AD_link,
+            #         'Fan_Page':Fan_Page,
+            #         'store_link':store_link,
+            #         'Heading':Heading,
+            #         'AD_copy':AD_copy,
+            #         'video_Link':video_Link
+            #     },
+            #     callback= self.parse_website
+            # )
+
+
+
+
+
+
+
+
+
+
+
+
+    # def parse_website(self,response):
+
+    #     store_link = response.meta['store_link']
+    #     FB_AD_link = response.meta['FB_AD_link']
+    #     Fan_Page = response.meta['Fan_Page']
+    #     Heading = response.meta['Heading']
+    #     AD_copy = response.meta['AD_copy']
+    #     video_Link = response.meta['video_Link']
+    #     self.driver.get(store_link).click()
+
+    #     items = {
+    #         'FB_AD_link':FB_AD_link,
+    #         'Fan_Page':Fan_Page,
+    #         'store_link':store_link,
+    #         'Heading':Heading,
+    #         'AD_copy':AD_copy,
+    #         'video_Link':video_Link
+            
+    #     }
+    #     yield items
