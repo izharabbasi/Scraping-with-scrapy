@@ -22,14 +22,16 @@ class PropertyScraperSpider(scrapy.Spider):
         driver.get('https://www.samtrygg.se/RentalObject/NewSearch')
         driver.implicitly_wait(10)
         self.responses.append(driver.page_source) 
-        try:
-            while driver.find_element_by_xpath("//a[@id='next']"):
-                next_page = driver.find_element_by_xpath("//a[@id='next']")
+        while driver.find_element_by_xpath("//a[@id='next']"):
+            next_page = driver.find_element_by_xpath("//a[@id='next']")
+            try:
                 next_page.click()
-                driver.implicitly_wait(10)
-                self.responses.append(driver.page_source)
-        except:
-            driver.implicitly_wait(10)    
+            except:
+                break
+            
+            driver.implicitly_wait(10)
+            self.responses.append(driver.page_source)
+           
         driver.close()
         
 
@@ -45,29 +47,31 @@ class PropertyScraperSpider(scrapy.Spider):
                     url= link,
                     callback=self.parse_listing,
                 )
-                break
+                
                         
     def parse_listing(self,response):
         for r in self.responses:
             resp = Selector(text=r)
-        features = {
-            'title': resp.xpath('//*[@id="property"]/div[1]/div[1]/div[2]/h1/text()').get(),
-            'image_url': resp.xpath("//a[@itemprop='contentUrl']/@href").getall(),
-                #'address' : response.xpath("//a[@id='js-scroll-to-map']/text()[2]").get().strip(),
-                #'description': str(response.xpath("//p[@itemprop='description']/text()").get().replace('\n','').strip()),
-                #'Monthly_rent' : response.xpath('//*[@id="property"]/div[1]/div[2]/div[2]/div/div[1]/h5/span/text()').get().strip(),
-            'Accomodation': list(filter(None,[
-                text.replace('\n','').strip()
-                for text in 
-                resp.css("div[class='boendet ammenities row'] *::text").getall()
-            ])),
-            'Amenities': list(filter(None,[
-                text.replace('\n','').strip()
-                for text in 
-                resp.css("div[class='ammenities row'] *::text").getall()
-            ])),
-            }
-        yield features
+            listings = resp.xpath("//section[@class='main-content property-section']/div[1]")
+            for lists in listings:
+                features = {
+                    'title': lists.xpath(".//div[@class='description add-content']/h1/text()").get(),
+                    'address': lists.xpath(".//div[@class='description add-content']/div/h2/a/text()[2]").getall(),
+                        #'address' : response.xpath("//a[@id='js-scroll-to-map']/text()[2]").get().strip(),
+                        #'description': str(response.xpath("//p[@itemprop='description']/text()").get().replace('\n','').strip()),
+                        #'Monthly_rent' : response.xpath('//*[@id="property"]/div[1]/div[2]/div[2]/div/div[1]/h5/span/text()').get().strip(),
+                    #'Accomodation': list(filter(None,[
+                    #     text.replace('\n','').strip()
+                    #     for text in 
+                    #     resp.css("div[class='boendet ammenities row'] *::text").getall()
+                    # ])),
+                    # 'Amenities': list(filter(None,[
+                    #     text.replace('\n','').strip()
+                    #     for text in 
+                    #     resp.css("div[class='ammenities row'] *::text").getall()
+                    # ])),
+                    }
+                yield features
 
 
     
