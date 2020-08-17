@@ -2,51 +2,83 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 from selenium import webdriver
-from shutil import which
-import string
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+from scrapy.selector import Selector
+import urllib
+import time
+import re
+
+def cleanUp(inputString):
+    if inputString:
+        return re.sub('[\n\t\t\t]','',inputString).strip()
+
 
 
 class YlpSpider(scrapy.Spider):
     name = "ylp"
-    alphabets = string.ascii_lowercase
+    keyword = 'Elektronik'
+    city = '/Berlin'
+    radius = '?umkreis=2958'
     allowed_domains = ["gelbeseiten.de"]
-    start_urls = ['https://www.gelbeseiten.de/Suche/Elektronik/Bundesweit']
+    start_urls = ['https://www.gelbeseiten.de/Suche/Elektronik/Stuttgart']
+
+    base_url = 'https://www.gelbeseiten.de/Suche/'
+    url = base_url + keyword + city + radius
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 Edg/84.0.522.59',
     }
 
     custom_settings = {
-        # 'FEED_FORMAT': 'csv',
-        # 'FEED_URI': 'Data.csv',
+        'FEED_FORMAT': 'csv',
+        'FEED_URI': 'Data.csv',
         'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
         'DOWNLOAD_DELAY': 1
     }
 
+    res = []
+
     def __init__(self):
         driver = webdriver.Chrome()
-        driver.get('https://www.gelbeseiten.de/Suche/Elektronik/Bundesweit')
+        driver.get(self.url)
+        self.res.append(driver.page_source)
+        time.sleep(3)
+        try:
+            while True:
+                try:
+                    loadMoreButton = driver.find_element_by_xpath(
+                        '//*[@id="mod-LoadMore--button"]')
+                    time.sleep(2)
+                    loadMoreButton.click()
+                    time.sleep(5)
+                    self.res.append(driver.page_source)
+                except Exception as e:
+                    print(e)
+                    break
+        except:
+            pass
+        print("Complete")
+        time.sleep(2)
+        driver.quit()
 
     def parse(self, response):
-        #companies = response.xpath('//*[@class="name m08_name"]')
+        for r in self.res:
+            resp = Selector(text=r)
 
-        for company in response.css('article'):
-            name = company.xpath(
-                './/span[@itemprop="name"]//text()').extract_first()
-            address = company.xpath(
-                './/span[@itemprop="streetAddress"]//text()').extract_first()
-            postalcode = company.xpath(
-                './/span[@itemprop="postalCode"]//text()').extract_first()
-            addressLocality = company.xpath(
-                './/span[@itemprop="addressLocality"]//text()').extract_first()
-            phone = company.xpath(
-                './/span[@class="nummer"]//text()').extract_first()
-            mail = company.xpath(
-                './/a[@class="link email_native_app"]/@href').extract()
-            branchen = company.xpath(
-                './/div[@data-role="branchen"]/div/span/text()').extract_first()
+        companies = resp.xpath("//article[@class='mod mod-Treffer']")
+        for company in companies:
+            yield {
+            'name' : company.xpath(".//h2[@data-wipe-name='Titel']/text()").get(),
+            'address' : str(company.xpath(".//p[@data-wipe-name = 'Adresse']/descendant-or-self::text()").getall()).replace('\\n\\t\\t\\t','').replace('\\n\\t\\t','').replace('\\t','').replace('\\xa0','').strip(),
+            'postalcode' : re.compile(r'\d+').findall(cleanUp(company.xpath(".//address/p/span[1]/text()").get())),
+            'addressLocality' : cleanUp(company.xpath('.//address/p[1]/text()[1]').get()),
+            'phone' : company.xpath(".//p[@class='mod-AdresseKompakt__phoneNumber']/text()").get(),          
+            'mail' : str(company.xpath(".//a[@class='contains-icon-email gs-btn']/@href").get()).replace('?subject=Anfrage%20%C3%BCber%20Gelbe%20Seiten','').replace('mailto:','').strip(),     
+            'branchen' : cleanUp(company.xpath(".//p[@class='d-inline-block mod-Treffer--besteBranche']/text()").get())
+            }
 
-            yield{'Name': name, 'Address': address, 'PLZ': postalcode, 'Ort': addressLocality, 'Tel': phone, 'Mail': mail, 'Branche': branchen}
 
 
 # Run Spider
