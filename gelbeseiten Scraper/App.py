@@ -81,7 +81,7 @@ class YlpSpider(scrapy.Spider):
 
 
 
-# Run Spider
+# Run Spider 
 process = CrawlerProcess()
 process.crawl(YlpSpider)
 process.start()
