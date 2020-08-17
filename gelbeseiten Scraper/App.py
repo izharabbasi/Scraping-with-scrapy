@@ -32,10 +32,10 @@ class YlpSpider(scrapy.Spider):
     }
 
     custom_settings = {
-        #'FEED_FORMAT': 'csv',
-        #'FEED_URI': 'Data.csv',
-        #'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
-        #'DOWNLOAD_DELAY': 1
+        'FEED_FORMAT': 'csv',
+        'FEED_URI': 'Data.csv',
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
+        'DOWNLOAD_DELAY': 1
     }
 
     res = []
