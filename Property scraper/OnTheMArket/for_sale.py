@@ -3,6 +3,11 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.selector import Selector
 import urllib
 import json
+import re
+
+def cleanUp(inputString):
+    if inputString:
+        return re.sub('[\n\\n\n\n''                      ]','',inputString).strip()
 
 class ForSale(scrapy.Spider):
     name = 'sale'
@@ -78,7 +83,9 @@ class ForSale(scrapy.Spider):
             'price' : price,
             'agent' : response.xpath('//*[@id="property-actions"]/div/div[1]/div/a/div[2]/h2/text()').get(),
             'agent_address' : response.xpath('//*[@id="property-actions"]/div/div[1]/div/a/div[2]/div/text()').get().strip(),
-            'agent_phone': response.xpath('//*[@id="property-actions"]/div/div[1]/div/div/div[2]/text()').get()
+            'agent_phone': response.xpath('//*[@id="property-actions"]/div/div[1]/div/div/div[2]/text()').get(),
+            'features' : str(response.xpath("//ul[@class='property-features']/li/descendant::text()").getall()).strip(),
+            'description' : cleanUp(str(response.xpath("//div[@id='description-text']/descendant::text()").getall())).replace('\\n','').replace('','')
 
         }
       
