@@ -25,7 +25,9 @@ class ForSale(scrapy.Spider):
 
     custom_settings = {
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'Sale_data.csv'
+        'FEED_URI' : 'Sale_data.csv',
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
+        'DOWNLOAD_DELAY': 1
     }
 
     postcodes = []
@@ -68,6 +70,19 @@ class ForSale(scrapy.Spider):
                 },
                 callback=self.parse_listings
             )
+        next_page = response.xpath("//a[@title='Next page']/@href").get()
+        try:
+            if next_page:
+                yield response.follow(
+                    url = next_page,
+                    headers = self.headers,
+                    meta = {
+                        'postcode': postcode
+                    },
+                    callback = self.parse
+                )
+        except AttributeError:
+            pass
     
     def parse_listings(self,response):
         postcode = response.meta.get('postcode')
