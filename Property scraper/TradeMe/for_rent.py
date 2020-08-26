@@ -6,9 +6,9 @@ import re
 
 class ForSale(scrapy.Spider):
     name = 'for_sale'
-    location = 'auckland'
-    district = 'auckland-city'
-    suburbs = 'avondale'
+    location = 'waikato'
+    district = 'hamilton'
+    suburbs = 'bader'
 
     base_url = 'https://www.trademe.co.nz/a/property/residential/rent/'
 
@@ -18,7 +18,7 @@ class ForSale(scrapy.Spider):
 
     custom_settings = {
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'Sale_data.csv',
+        'FEED_URI' : 'Rent_data.csv',
         #'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
         #'DOWNLOAD_DELAY': 1
     }
@@ -54,11 +54,11 @@ class ForSale(scrapy.Spider):
         yield {
             'link': response.url,
             'country': 'New Zealand',
-            'listed': response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/div/text()').get(),
+            'listed': response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy']/text()").get(),
             'address': response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get(),
-            'bedrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list ng-star-inserted']/li[1]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
-            'bathrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list ng-star-inserted']/li[2]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
-            'car_spaces' : response.xpath("//table[@class='o-table']/tbody/tr[2]/td[2]/text()").get(),
+            'bedrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[1]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
+            'bathrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[2]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
+            'car_spaces' : response.xpath("(//td[@data-th='Value'])[3]/text()").get(),
             'agency' : response.xpath("//h3[@class='pt-agency-summary__agency-name']/text()").get(),
             'agent': response.xpath("//h3[@class='pt-agent-summary__agent-name']/text()").get()
         }
