@@ -1,11 +1,31 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import urllib
+import csv
 import re
 
 
 class ForSale(scrapy.Spider):
     name = 'for_sale'
+    
+    column_names = [
+        'Address',
+        'Bedrooms',
+        'Bathrooms',
+        'Listing Title / Heading',
+        'Today Listing',
+        'Date Property First Listed',
+        'Rent $ First Listed',
+        'Rent $ Per Week',
+        'Date Property Removed',
+        'Agency Name',
+        'Agent Name',
+        'Private Agent Name',
+        'Listing Link',
+        'Contact Number',
+        'Property Description'
+    ]
+
    
 
     headers = {
@@ -13,11 +33,14 @@ class ForSale(scrapy.Spider):
     }
 
     custom_settings = {
-        'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'Rent_data.csv'.replace('\n', ''),
         #'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
         #'DOWNLOAD_DELAY': 1
     }
+
+    def __init__(self):
+        with open('For_Rent.csv', 'w', newline='', encoding='utf-8') as f:
+            f.write(','.join(self.column_names) + '\n')
+
 
     def start_requests(self):
         yield scrapy.Request(
@@ -45,25 +68,29 @@ class ForSale(scrapy.Spider):
         #     )
         
     def parse_listing(self, response):
-        
-        yield {
-            'Address': response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get(),
-            'Bedrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[1]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
-            'Bathrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[2]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
-            'Listing Title / Heading': response.xpath("//h2[@class='tm-property-listing-body__title p-h1']/text()").get(),
-            'Today Listing' : response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy tm-property-listing-body__date--today']/text()").get(),
-            'Date Property First Listed': response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy']/text()").get(),
-            'Rent $ First Listed': response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get(),
-            'Rent $ Per Week': response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get(),
-            'Date Property Removed' : response.xpath("//table[@class='o-table']/tbody/tr[1]/td[2]/text()").get(),
-            'Agency Name' : response.xpath("//h3[@class='pt-agency-summary__agency-name']/text()").get(),
-            'Agent Name': response.xpath("//h3[@class='pt-agent-summary__agent-name']/text()").get(),
-            'Private Agent Name' : response.xpath("(//a[@class='tm-private-seller--member-name-link'])[1]/text()").get(),
+       
+        features =  {
+            'Address': str(response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get()).strip(),
+            'Bedrooms': str(response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[1]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get()).strip(),
+            'Bathrooms': str(response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[2]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get()).strip(),
+            'Listing Title / Heading': str(response.xpath("//h2[@class='tm-property-listing-body__title p-h1']/text()").get()).strip(),
+            'Today Listing' : str(response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy tm-property-listing-body__date--today']/text()").get()).strip(),
+            'Date Property First Listed': str(response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy']/text()").get()).strip(),
+            'Rent $ First Listed': str(response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get()).strip(),
+            'Rent $ Per Week': str(response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get()).strip(),
+            'Date Property Removed' : str(response.xpath("//table[@class='o-table']/tbody/tr[1]/td[2]/text()").get()).strip(),
+            'Agency Name' : str(response.xpath("//h3[@class='pt-agency-summary__agency-name']/text()").get()).strip(),
+            'Agent Name': str(response.xpath("//h3[@class='pt-agent-summary__agent-name']/text()").get()).strip(),
+            'Private Agent Name' : str(response.xpath("(//a[@class='tm-private-seller--member-name-link'])[1]/text()").get()).strip(),
             'Listing Link': response.url,
-            'Contact Number': response.xpath("//div[@class='pt-agency-summary__agency-information-footer-section']/span/a/text()").get(),
-            'Property Description' : response.xpath("//div[@class='tm-markdown']/descendant::node()/text()").getall()
+            'Contact Number': str(response.xpath("//div[@class='pt-agency-summary__agency-information-footer-section']/span/a/text()").get()).strip(),
+            'Property Description' : str(response.xpath("//div[@class='tm-markdown']/descendant::node()/text()").getall()).strip()
         }
+        yield features
 
+        with open('For_Rent.csv', 'a', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, self.column_names)
+                writer.writerow(features)
 
 
 
