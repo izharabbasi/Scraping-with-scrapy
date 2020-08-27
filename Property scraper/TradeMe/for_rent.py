@@ -14,7 +14,7 @@ class ForSale(scrapy.Spider):
 
     custom_settings = {
         'FEED_FORMAT' : 'csv',
-        'FEED_URI' : 'Rent_data.csv',
+        'FEED_URI' : 'Rent_data.csv'.replace('\n', ''),
         #'CONCURRENT_REQUESTS_PER_DOMAIN': 2,
         #'DOWNLOAD_DELAY': 1
     }
