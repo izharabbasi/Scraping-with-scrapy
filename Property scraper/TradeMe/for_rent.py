@@ -51,11 +51,16 @@ class ForSale(scrapy.Spider):
             'Bedrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[1]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
             'Bathrooms': response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[2]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get(),
             'Listing Title / Heading': response.xpath("//h2[@class='tm-property-listing-body__title p-h1']/text()").get(),
-            'Date Property First Listed': response.xpath("(//div[@_ngcontent-frend-c46])[2]/text()").get(),
+            'Today Listing' : response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy tm-property-listing-body__date--today']/text()").get(),
+            'Date Property First Listed': response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy']/text()").get(),
+            'Rent $ First Listed': response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get(),
+            'Rent $ Per Week': response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get(),
+            'Date Property Removed' : response.xpath("//table[@class='o-table']/tbody/tr[1]/td[2]/text()").get(),
             'Agency Name' : response.xpath("//h3[@class='pt-agency-summary__agency-name']/text()").get(),
             'Agent Name': response.xpath("//h3[@class='pt-agent-summary__agent-name']/text()").get(),
+            'Private Agent Name' : response.xpath("(//a[@class='tm-private-seller--member-name-link'])[1]/text()").get(),
             'Listing Link': response.url,
-            'Contact Number': response.xpath("//a[@_ngcontent-frend-c97]/@href").get(),
+            'Contact Number': response.xpath("//div[@class='pt-agency-summary__agency-information-footer-section']/span/a/text()").get(),
             'Property Description' : response.xpath("//div[@class='tm-markdown']/descendant::node()/text()").getall()
         }
 
