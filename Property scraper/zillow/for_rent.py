@@ -41,8 +41,7 @@ class ForSale(scrapy.Spider):
                 'bedrooms' : str(''.join(card.xpath(".//ul[@class='list-card-details']/li[1]/descendant-or-self::text()").getall())).replace("' '",'').replace( ' ,','').strip(),
                 'bathrooms' : str(''.join(card.xpath(".//ul[@class='list-card-details']/li[2]/descendant-or-self::text()").getall())).replace("' '",'').replace( ' ,','').strip(),
                 'Area' : str(''.join(card.xpath(".//ul[@class='list-card-details']/li[3]/descendant-or-self::text()").getall())).replace("' '",'').replace( ' ,','').strip(),
-                'prorperty_type' : response.xpath(".//div[@class='list-card-type']/text()").get(),
-                'agency_name' : response.xpath("//div[@class='list-card-brokerage list-card-img-overlay']/div/text()").get()
+                'prorperty_type' : response.xpath(".//div[@class='list-card-type']/text()").get()
             }
         next_page = response.xpath("//a[@title='Next page']/@href").get()
         if next_page:
