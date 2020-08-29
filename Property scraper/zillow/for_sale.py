@@ -6,7 +6,7 @@ import json
 
 class ForSale(scrapy.Spider):
     name = 'for_sale'
-    region = 'Atlanta,GA'
+    region = input('Please Enter CITY/STATE/POSTCODE  ')
 
     base_url = 'https://www.zillow.com/homes/for_sale/'
 
@@ -23,7 +23,7 @@ class ForSale(scrapy.Spider):
       
 
     def start_requests(self):
-        url = self.base_url + self.region 
+        url = self.base_url + self.region.lower()
         yield scrapy.Request(
             url=url,
             headers=self.headers,
@@ -34,19 +34,23 @@ class ForSale(scrapy.Spider):
         cards = response.xpath("//ul[@class='photo-cards photo-cards_wow photo-cards_short']/li")
         for card in cards:
             yield {
-                'link' : response.url,
+                'link' : response.xpath(".//a[@class='list-card-link list-card-img']/@href").get(),
                 'Lising_Date' : card.xpath(".//div[@class='list-card-top']/div/text()").get(),
                 'address' : card.xpath(".//address[@class='list-card-addr']/text()").get(),
                 'price' : card.xpath(".//div[@class='list-card-price']/text()").get(),
                 'bedrooms' : str(''.join(card.xpath(".//ul[@class='list-card-details']/li[1]/descendant-or-self::text()").getall())).replace("' '",'').replace( ' ,','').strip(),
                 'bathrooms' : str(''.join(card.xpath(".//ul[@class='list-card-details']/li[2]/descendant-or-self::text()").getall())).replace("' '",'').replace( ' ,','').strip(),
                 'Area' : str(''.join(card.xpath(".//ul[@class='list-card-details']/li[3]/descendant-or-self::text()").getall())).replace("' '",'').replace( ' ,','').strip(),
-                'prorperty_type' : response.xpath(".//div[@class='list-card-type']/text()").get()
-                
-
-
+                'prorperty_type' : response.xpath(".//div[@class='list-card-type']/text()").get(),
+                'agency_name' : response.xpath("//div[@class='list-card-brokerage list-card-img-overlay']/div/text()").get()
             }
-
+        next_page = response.xpath("//a[@title='Next page']/@href").get()
+        if next_page:
+            yield response.follow(
+                url=next_page,
+                headers=self.headers,
+                callback=self.parse
+            )
 
 
 #run scraper
