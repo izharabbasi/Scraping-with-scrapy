@@ -10,6 +10,9 @@ class ForSale(scrapy.Spider):
     
     column_names = [
         'Address',
+        'District',
+        'City',
+        'State',
         'Bedrooms',
         'Bathrooms',
         'Listing Title / Heading',
@@ -21,7 +24,6 @@ class ForSale(scrapy.Spider):
         'Agency Name',
         'Agent Name',
         'Private Agent Name',
-        'Private Agent Phone',
         'Listing Link',
         'Contact Number',
         'Property Description'
@@ -71,19 +73,21 @@ class ForSale(scrapy.Spider):
     def parse_listing(self, response):
        
         features =  {
-            'Address': str(response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get()).strip(),
+            'Address': str(response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get()).strip().split(',')[0],
+            'District': str(response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get()).strip().split(',')[1],
+            'City': str(response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get()).strip().split(',')[2],
+            'State': str(response.xpath('/html/body/trade-me/div[1]/main/div/tm-property-listing/div/tm-property-listing-body/div/section[1]/tg-row/tg-col/h1/text()').get()).strip().split(',')[3],
             'Bedrooms': str(response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[1]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get()).strip(),
             'Bathrooms': str(response.xpath("//ul[@class='tm-property-listing-attributes__tag-list']/li[2]/tm-property-listing-attribute-tag/tg-tag/span/div/text()").get()).strip(),
             'Listing Title / Heading': str(response.xpath("//h2[@class='tm-property-listing-body__title p-h1']/text()").get()).strip(),
             'Today Listing' : str(response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy tm-property-listing-body__date--today']/text()").get()).strip(),
             'Date Property First Listed': str(response.xpath("//div[@class='tm-property-listing-body__date p-secondary-copy']/text()").get()).strip(),
-            'Rent $ First Listed': str(response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get()).strip(),
-            'Rent $ Per Week': str(response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get()).strip(),
+            'Rent $ First Listed': str(response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get()).replace('$','').replace('per week','').strip(),
+            'Rent $ Per Week': str(response.xpath("//h2[@class='tm-property-listing-body__price']/strong/text()").get()).replace('$','').replace('per week','').strip(),
             'Date Property Removed' : str(response.xpath("//table[@class='o-table']/tbody/tr[1]/td[2]/text()").get()).strip(),
             'Agency Name' : str(response.xpath("//h3[@class='pt-agency-summary__agency-name']/text()").get()).strip(),
             'Agent Name': str(response.xpath("//h3[@class='pt-agent-summary__agent-name']/text()").get()).strip(),
             'Private Agent Name' : str(response.xpath("(//a[@class='tm-private-seller--member-name-link'])[1]/text()").get()).strip(),
-            'Private Agent Phone' : response.xpath("/html/body/trade-me/div[1]/main/div/tm-property-listing/div/div[4]/tg-row/tg-col[1]/tm-prop-seller-details/div[1]/div[1]/div[2]/button/a/text()").get(),
             'Listing Link': response.url,
             'Contact Number': str(response.xpath("//div[@class='pt-agency-summary__agency-information-footer-section']/span/a/text()").get()).strip(),
             'Property Description' : str(response.xpath("//div[@class='tm-markdown']/descendant::node()/text()").getall()).strip()
