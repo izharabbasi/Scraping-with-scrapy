@@ -21,6 +21,7 @@ class ForSale(scrapy.Spider):
         'Agency Name',
         'Agent Name',
         'Private Agent Name',
+        'Private Agent Phone',
         'Listing Link',
         'Contact Number',
         'Property Description'
@@ -82,6 +83,7 @@ class ForSale(scrapy.Spider):
             'Agency Name' : str(response.xpath("//h3[@class='pt-agency-summary__agency-name']/text()").get()).strip(),
             'Agent Name': str(response.xpath("//h3[@class='pt-agent-summary__agent-name']/text()").get()).strip(),
             'Private Agent Name' : str(response.xpath("(//a[@class='tm-private-seller--member-name-link'])[1]/text()").get()).strip(),
+            'Private Agent Phone' : response.xpath("/html/body/trade-me/div[1]/main/div/tm-property-listing/div/div[4]/tg-row/tg-col[1]/tm-prop-seller-details/div[1]/div[1]/div[2]/button/a/text()").get(),
             'Listing Link': response.url,
             'Contact Number': str(response.xpath("//div[@class='pt-agency-summary__agency-information-footer-section']/span/a/text()").get()).strip(),
             'Property Description' : str(response.xpath("//div[@class='tm-markdown']/descendant::node()/text()").getall()).strip()
